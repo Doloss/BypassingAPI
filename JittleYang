@@ -1,0 +1,68 @@
+local BypassAPI = {}
+
+function BypassAPI:RegularHook(Path, FunctionName) --// Used 
+    local pth = getsenv(Path)
+    local funcName = FunctionName
+    for _,f in pairs(getreg()) do
+        if type(f) == 'function' then
+            local nfo = getinfo(f)
+            if nfo.Name == funcName then
+                hookfunction(nfo.func,function(...) return nil end)
+            end
+        end
+    end
+end
+
+function BypassAPI:ArgumentSpoofing(RemotePath, Arg1Value, Arg2Value, Arg3Value) --// If no Arg2 or Arg3 then set it to nil
+    local rem = RemotePath
+    local CurrentIndex
+    CurrentIndex = hookmetamethod(game, "__namecall", function(search, ...)
+        if search == rem and getnamecallmethod():lower() == "fireserver" then
+            local args {...}
+            args[1] = Arg1Value
+            arg[2] = Arg2Value
+            args[3] = Arg3Value
+            return CurrentIndex(search, unpack(args))
+        end
+        return old(search, ...)
+    end)
+end
+
+
+function BypassAPI:RemoteBlocking(RemotePath) --// If no Arg2 or Arg3 then set it to nil
+    local rem = RemotePath
+    local CurrentIndex
+    CurrentIndex = hookmetamethod(game, "__namecall", function(search, ...)
+        if search == rem and getnamecallmethod():lower() == "fireserver" then
+            return nil
+        end
+        return old(search, ...)
+    end)
+end
+
+function BypassAPI:Waiting(FunctionName)
+    local WaitHook
+    for _,v in pairs(getgc()) do
+        if debug.info(v, "n") == FunctionName then
+            WaitHook = v
+        end
+    end
+    hookfunction(WaitHook, newcclosure(function(...)
+         return task.wait(9e9)
+    end))
+end
+
+function BypassAPI:Pulse(Connection)
+    while wait(0.4) do
+        for i,v in pairs(Connection) do
+            v:Disable()
+        end
+    end
+    while wait(0.6) do
+        for i,v in pairs(Connection) do
+            if v.State then
+            v:Enable()
+            end
+        end
+    end
+end
